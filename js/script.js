@@ -56,9 +56,15 @@ function startGame() {
     if (direction == "left") snakeX -= box;
     if (direction == "up") snakeY -= box;
     if (direction == "down") snakeY += box;
-    // Removendo a posição anterior do Array quando a cobrinha anda
-    snake.pop();
-    // Adicionando uma nova posição no começo do Array para fazer a cobrinha andar
+
+    if (snakeX != food.x || snakeY != food.y) {
+        // Removendo a última posição do Array
+        snake.pop();
+    } else {
+        food.x = Math.floor(Math.random() * 15 + Math.random()) * box;
+        food.y = Math.floor(Math.random() * 15 + Math.random()) * box;
+    }
+    // Adicionando uma nova posição no começo do Array
     let newPosition = {
         x: snakeX,
         y: snakeY,
