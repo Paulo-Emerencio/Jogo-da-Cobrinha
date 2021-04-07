@@ -1,4 +1,4 @@
-# Jogo-da-Cobrinha
-Recriação do Jogo da cobrinha, usando HTML, CSS e Javascript.
+# Jogo da Minhoca
+Recriação do famoso Jogo da cobrinha, mas dando o meu toque pessoal para o game.
 
-Mais uma vez instruído pela professora [**Gabriela Pinheiro**](https://github.com/SpruceGabriela)
+Utilizando HTML, CSS e Javascript.

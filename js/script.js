@@ -1,91 +1,158 @@
-// Background
-let canvas = document.getElementById("snake");
-let context = canvas.getContext("2d");
-let box = 32;
-// A cobrinha
-let snake = [];
-snake[0] = {
+// Música ambiente
+const bgMusic = new Audio("audio/bg-music.mp3");
+bgMusic.volume = 0.023;
+bgMusic.loop = true;
+
+// Background do game
+const canvas = document.getElementById("snake");
+const context = canvas.getContext("2d");
+const box = 32;
+
+// A minhoca
+const wormHeadRight = new Image(32,32); wormHeadRight.src = "img/minhoca-cabeca-right.png";
+const wormHeadDown = new Image(32,32); wormHeadDown.src = "img/minhoca-cabeca-down.png";
+const wormHeadLeft = new Image(32,32); wormHeadLeft.src = "img/minhoca-cabeca-left.png";
+const wormHeadUp = new Image(32,32); wormHeadUp.src = "img/minhoca-cabeca-up.png";
+const wormBody = new Image(32,32); wormBody.src = "img/minhoca.png";
+const worm = [];
+worm[0] = {
+    x: box,
+    y: box,
+}
+// Direção inicial da minhoca
+let direction = "right";
+
+// A maçã
+const appleImage = new Image(32,32);
+appleImage.src = "img/maca.png";
+const apple = {
     x: 8 * box,
     y: 8 * box,
 }
-// Direção inicial da cobrinha
-let direction = "right";
-// A comida da cobrinha
-let food = {
-    x: Math.floor(Math.random() * 15 + Math.random()) * box,
-    y: Math.floor(Math.random() * 15 + Math.random()) * box,
-}
+// Efeito sonoro de maçã mordida
+const appleAudio = new Audio("audio/biting-apple.mp3");
+appleAudio.playbackRate = 2;
+// Contador das maçãs comidas
+let appleCount = 0;
+
+// Div oculta Game-Over
+const gameOver = document.querySelector(".game-over");
+const wormScream = new Audio("audio/AiAi.mp3");
+const victorySong = new Audio("audio/victory.mp3");
+
 // Funções que desenham os elementos do jogo
 function createBG() {
     context.fillStyle = "lightgreen";
     context.fillRect(0, 0, 16 * box, 16 * box);
 }
-function createSnake() {
-    for (let i = 0; i < snake.length; i++) {
-        context.fillStyle = "green";
-        context.fillRect(snake[i].x, snake[i].y, box, box);
+
+function createWorm() {
+    for (let i = 0; i < worm.length; i++) {
+        if (i == 0 && direction == "right") context.drawImage(wormHeadRight, worm[i].x, worm[i].y, box, box);
+        if (i == 0 && direction == "down") context.drawImage(wormHeadDown, worm[i].x, worm[i].y, box, box);
+        if (i == 0 && direction == "left") context.drawImage(wormHeadLeft, worm[i].x, worm[i].y, box, box);
+        if (i == 0 && direction == "up") context.drawImage(wormHeadUp, worm[i].x, worm[i].y, box, box);
+        if (i != 0) context.drawImage(wormBody, worm[i].x, worm[i].y, box, box);
     }
 }
+
 function createFood() {
-    context.fillStyle = "red";
-    context.fillRect(food.x, food.y, box, box);
+    context.drawImage(appleImage, apple.x, apple.y, box, box);
 }
-// Event Listener das teclas do teclado
+
+// Função chamada quando a minhoca pega uma maçã
+function grabbedFood() {
+    // Efeito sonoro de maçã mordida
+    appleAudio.play()
+    // Colocando a maçã em outro ponto aleatório
+    apple.x = Math.floor(Math.random() * 15 + Math.random()) * box;
+    apple.y = Math.floor(Math.random() * 15 + Math.random()) * box;
+    // Loop para impedir que a maçã apareça em um espaço ocupado pela minhoca
+    for (let i = 0; i < worm.length; i++) {
+        if (apple.x == worm[i].x && apple.y == worm[i].y) {
+            apple.x = Math.floor(Math.random() * 15 + Math.random()) * box;
+            apple.y = Math.floor(Math.random() * 15 + Math.random()) * box;
+            i = 0;
+        }
+    }
+    // Adiciona +1 no contador de maçãs
+    appleCount++;
+    // Aumentando a dificuldade do game até chegar em 50ms
+    if (interval > 50) {
+        interval -= 10;
+        clearInterval(game);
+        game = setInterval(startGame, interval);
+    } else if (appleCount == 40) {
+    // Else da Vitória! Zerando o Game!! Parabéns!!!
+        clearInterval(game);
+        victorySong.play();
+        bgMusic.pause();
+        gameOver.classList.add("victory");
+        gameOver.innerHTML = `
+            <h2 class="titulo">Parabéns! &#129351</h2>
+            <p class="subtitulo">A minhoca comeu <span>40</span> maçãs</p>
+            <button id="btn" onclick="restartGame()">Jogar de novo</button>
+        `;
+    }
+}
+
+// Função que determina as teclas pressionadas e inicia a música de fundo
 document.addEventListener('keydown', newDirection);
 function newDirection(event) {
     if (event.keyCode == 37 && direction != "right") direction = "left";
     if (event.keyCode == 38 && direction != "down") direction = "up";
     if (event.keyCode == 39 && direction != "left") direction = "right";
     if (event.keyCode == 40 && direction != "up") direction = "down";
+    if (event.keyCode == 38 || event.keyCode == 40) bgMusic.play();
 }
+
 // Função que executa o jogo
 function startGame() {
-    // Resetando a posição da cobrinha quando ela passa as bordas
-    if (snake[0].x > 15 * box) snake[0].x = 0;
-    if (snake[0].x < 0) snake[0].x = 16 * box;
-    if (snake[0].y > 15 * box) snake[0].y = 0;
-    if (snake[0].y < 0) snake[0].y = 16 * box;
-    // Checando se a cobrinha se chocou com ela mesma
-    for (let i = 1; i < snake.length; i++) {
-        if (snake[0].x == snake[i].x && snake[0].y == snake[i].y) {
+    // Resetando a posição da minhoca quando ela passa as bordas
+    if (worm[0].x > 15 * box) worm[0].x = 0;
+    if (worm[0].x < 0) worm[0].x = 15 * box;
+    if (worm[0].y > 15 * box) worm[0].y = 0;
+    if (worm[0].y < 0) worm[0].y = 15 * box;
+    // Loop para checar se a minhoca se chocou com ela mesma
+    for (let i = 1; i < worm.length; i++) {
+        if (worm[0].x == worm[i].x && worm[0].y == worm[i].y) {
             clearInterval(game);
-            alert('Game Over');
-            document.location.reload();
+            wormScream.play();
+            bgMusic.pause();
+            gameOver.innerHTML = `
+                <h2 class="titulo">Game Over &#128557</h2>
+                <p class="subtitulo">A minhoca comeu só <span>${appleCount}</span> maçãs</p>
+                <button id="btn" onclick="restartGame()">Tentar de novo</button>
+            `;
+            return;
         }
     }
     // Executando as funções que desenham os elementos do jogo
     createBG();
-    createSnake();
+    createWorm();
     createFood();
-    // Coordenadas da cobrinha
-    let snakeX = snake[0].x;
-    let snakeY = snake[0].y;
-    if (direction == "right") snakeX += box;
-    if (direction == "left") snakeX -= box;
-    if (direction == "up") snakeY -= box;
-    if (direction == "down") snakeY += box;
-    // Condições que determinam se a cobrinha pegou ou não a comida
-    if (snakeX != food.x || snakeY != food.y) {
-        // Se a comida aparecer na posição 0 de X ou Y, a cobrinha poderá pegá-la saindo pelo lado oposto do Canvas e resetando sua posição onde está a comida
-        if (food.x == 0 && snake[0].x == 0 && snake[0].y == food.y) {
-            food.x = Math.floor(Math.random() * 15 + Math.random()) * box;
-            food.y = Math.floor(Math.random() * 15 + Math.random()) * box;
-        } else if (food.y == 0 && snake[0].y == 0 && snake[0].x == food.x) {
-            food.x = Math.floor(Math.random() * 15 + Math.random()) * box;
-            food.y = Math.floor(Math.random() * 15 + Math.random()) * box;
-        } else {
-            // Remove a última posição do Array
-            snake.pop();
-        }
-    } else {
-        food.x = Math.floor(Math.random() * 15 + Math.random()) * box;
-        food.y = Math.floor(Math.random() * 15 + Math.random()) * box;
-    }
+    // Coordenadas da minhoca
+    let wormX = worm[0].x;
+    let wormY = worm[0].y;
+    if (direction == "right") wormX += box;
+    if (direction == "left") wormX -= box;
+    if (direction == "up") wormY -= box;
+    if (direction == "down") wormY += box;
+    // Condição que determinam se a minhoca pegou ou não a comida
+    if (worm[0].x == apple.x && worm[0].y == apple.y) grabbedFood();
+    else worm.pop();
     // Adicionar uma nova posição no começo do Array
-    let newPosition = {
-        x: snakeX,
-        y: snakeY,
+    const newPosition = {
+        x: wormX,
+        y: wormY,
     }
-    snake.unshift(newPosition);
+    worm.unshift(newPosition);
 }
-let game = setInterval(startGame, 100);
+// Chama a função que executa o game
+let interval = 250;
+let game = setInterval(startGame, interval);
+
+// Tentar de novo
+function restartGame() {
+    document.location.reload();
+}
